@@ -13,8 +13,31 @@ The intended workflow for this extension is as follows:
 1. Registry identifies Domain objects for which registrant must be verified (selection mechanism is out of scope of this extension)
 2. Registry notifies registrar about that verification request (preferrably by the EPP Message Queue mechanism - message format is out of scope of this extension)
 3. Registrar receives verification request, and verifies registrant contact for the given domain name
-4. Registrar creates `verficationReport` and provisions this with the registry via a <contact:update> transform command on the registrant, using the extension described in this document.
-5. Registry acts upon the `verificationReport`, actual procedures are subject to local policy
+4. Registrar creates Verification Rerport and provisions this with the registry via a <contact:update> transform command on the registrant, using the extension described in this document.
+5. Registry acts upon the Verification Report contents, with actual procedures being subject to local server policy
+
+## The Verification Report
+
+When a registrar has completed verification process for a registrant, the result will be communicated back to the registry using the `<contact:create>` or `<contact:update>` transform commands, via a `<verification:report>` element (assuming the extension namespace is tied to the `verification` name space prefix). The `<verification:report>` can occur at most once in those commands, however, a registrar may submit multiple Verification Reports in multiple commands. The registry will consider the most recently submitted Verification Report for the verification status of the registrant (and associated domains), but actual interpretation is local server policy.
+
+A `<verification:report>` element contains the following elements:
+
+- one `result` element, containing information about the outcome of the verification process, containing the string "success" or "failure"
+- one `verificationDate` element, containing the point in time of the completion of the verification process, in `dateTime` format
+- one `method` element, describing the method of verification in free text form
+- one `reference` element, provinding the representation of an internal reference to the verification documentation at the registrar (eg. a ticket number)
+- one `agent` element, containing the name of the entity that has performed the verification (eg. in case the verification was outsourced to a third party)
+
+Interpretation and restriction of those fields is subject to server policy, however a server MUST NOT accept a command that includes a Verification Report with a future `verificationDate` element.
+
+When a server returns a Verification Report in the response to a `<contact:info>` command, the `<verification:report>` element may contain the following attributes:
+
+- `receivedDate` - The point in time at which the Verification Report was received from the client
+- `clID` - The identifier of the client that originally submitted the Verification Report (as contacts may be transferred between clients)
+
+## Security Considerations
+
+Registrars must consider that contents of the Verification Report might be visible to other clients, especially in situations where contact objects (and hence their associated verification report) is transferred to a different client. However, as the Verification Report itself does not contain registrant data, the privacy impact is likely very limited.
 
 ## Examples
 

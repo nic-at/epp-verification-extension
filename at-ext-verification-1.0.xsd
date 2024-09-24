@@ -41,9 +41,9 @@
       <sequence>
         <element name="result"           type="verification:resultValueType"/>
         <element name="verificationDate" type="dateTime"/>
-        <element name="method"           type="verification:shortTokenType"/>
-        <element name="reference"        type="verification:referenceValueType"/>
-        <element name="agent"            type="verification:shortTokenType"/>
+        <element name="method"           type="verification:shortTokenType"     minOccurs="0"/>
+        <element name="reference"        type="verification:referenceValueType" minOccurs="0"/>
+        <element name="agent"            type="verification:shortTokenType"     minOccurs="0"/>
       </sequence>
       <attribute name="receivedDate"     type="dateTime"/>
       <attribute name="clID"             type="eppcom:clIDType"/>
