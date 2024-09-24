@@ -1,93 +1,125 @@
-# Epp Verification Extension
+# .at EPP Verification Extension
 
+v1.0, 20240924, Contact: Alexander Mayrhofer <alexander.mayrhofer@nic.at>
 
+This Extensible Provisioning Protocol (EPP) Extension provides the EPP protocol transport for the `verificationReport` and the corresponding, required status values associated to Domain and Contact objects.
 
-## Getting started
+The extension is a command/response extension, loosely inspired by RFC 3915 ("Domain Registry Grace Period Mapping"), especially its "Restore Report". 
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Workflow
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+The intended workflow for this extension is as follows:
 
-## Add your files
+1. Registry identifies Domain objects for which registrant must be verified (selection mechanism is out of scope of this extension)
+2. Registry notifies registrar about that verification request (preferrably by the EPP Message Queue mechanism - message format is out of scope of this extension)
+3. Registrar receives verification request, and verifies registrant contact for the given domain name
+4. Registrar creates `verficationReport` and provisions this with the registry via a <contact:update> transform command on the registrant, using the extension described in this document.
+5. Registry acts upon the `verificationReport`, actual procedures are subject to local policy
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## Examples
 
+The following examples are (incomplete) XML snippets of potential client / server interactions using the specified extension. "C:" indicates XML sent by the client, while "S:" indicates XML sent by the server.
+
+### Contact Update with verificationReport
+
+Example of a Registrar submitting a successful `verificationReport` for an existing contact object via a `<contact:update>` transform command:
+
+```xml
+C: <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+C:  <epp xmlns="urn:ietf:params:xml:ns:epp-1.0" 
+C:        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+C:        xsi:schemaLocation="urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd">
+C:  <command>
+C:   <update>
+C:    <contact:update xmlns:contact="urn:ietf:params:xml:ns:contact-1.0" xsi:schemaLocation="urn:ietf:params:xml:ns:contact-1.0 contact-1.0.xsd"> 
+C:      <contact:id>myhandle</contact:id>
+C:      <contact:chg/>
+C:    </contact:update> 
+C:   </update>
+C:   <extension>
+C:    <verification:update 
+C:           xmlns:verification="http://www.nic.at/xsd/at-ext-verificationReport-1.0" 
+C:           xsi:schemaLocation="urn:ietf:params:xml:ns:verificationReport-1.0 
+C:           verificationReport-1.0.xsd">  
+C:     <verification:report>
+C:      <verification:result>success</verification:result>
+C:      <verification:verificationDate>2023-11-26T22:00:00.0Z</verification:verificationDate>
+C:      <verification:method>ID Austria</verification:method>
+C:      <verification:reference>Process#321</verification:reference>
+C:      <verification:agent>SnakeOil used Domains and Certificates</verification:agent>
+C:     </verification:report>
+C:    </verification:update>
+C:   </extension>
+C:   <clTRID>ABC-12345</clTRID>
+C:  </command>
+C: </epp>
 ```
-cd existing_repo
-git remote add origin https://gitlab.sbg.nic.at/labs/nis2/epp-verification-extension.git
-git branch -M main
-git push -uf origin main
+
+### Contact Info, returning a verificationReport
+
+Example of a server responding to a `<contact:info>` query command, with the response containing a `verificationReport` structure. Note that the "standard" contact object response is truncated for brevity.
+
+```xml
+S: <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+S: <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+S:  <response>
+S:    <result code="1000">
+S:      <msg>Command completed successfully</msg>
+S:    </result>
+S:    <resData>
+S:      <contact:infData
+S:          xmlns:contact="urn:ietf:params:xml:ns:contact-1.0">
+S:  {{ standard contact info data goes here }}
+S:      </contact:infData>
+S:    </resData>
+S:    <extension>
+S:      <verification:infData {{ XML NS definition}}>
+S:        <verification:report receivedDate="2024-03-26T22:00:00.0Z" clID="reg123">
+S:          <verification:result>success</verification:result>
+S:          <verification:verificationDate>2023-11-26T22:00:00.0Z</verification:verificationDate>
+S:          <verification:method>ID Austria</verification:method>
+S:          <verification:reference>Process#321</verification:reference>
+S:          <verification:agent>RegistrarA</verification:agent>
+S:        </verification:report>
+S:        <verification:status s="verified"/>
+S:      </verification:infData>
+S:    <trID>
+S:      <clTRID>ABC-12345</clTRID>
+S:      <svTRID>54322-XYZ</svTRID>
+S:    </trID>
+S:  </response>
+S: </epp>
 ```
 
-## Integrate with your tools
+### Domain Info example
 
-- [ ] [Set up project integrations](https://gitlab.sbg.nic.at/labs/nis2/epp-verification-extension/-/settings/integrations)
+Example response to a `<domain:info>` query command, returning verification status information alongside the standard domain info response data. Note that standard domain information is redacted for brevity.
 
-## Collaborate with your team
+```xml
+S: <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+S: <epp xmlns="urn:ietf:params:xml:ns:epp-1.0"
+S:        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+S:        xsi:schemaLocation="urn:ietf:params:xml:ns:epp-1.0
+S:        epp-1.0.xsd">
+S:  <response>
+S:    <result code="1000">
+S:      <msg>Command completed successfully</msg>
+S:    </result>
+S:    <resData>
+S: {{ usual domain info data removed }}
+S:    </resData>
+S:    <extension>
+S:      <verification:infData xmlns:verification="http://www.nic.at/xsd/at-ext-verification-1.0"
+S:          xsi:schemaLocation="http://www.nic.at/xsd/at-ext-verification-1.0.xsd">
+S:        <verification:status s="pending"/>
+S:        <verification:actionDate>2025-11-26T22:00:00.0Z</verification:actionDate>
+S:      </verification:infData>
+S:    </extension>
+S:    <trID>
+S:      <clTRID>ABC-12345</clTRID>
+S:      <svTRID>54322-XYZ</svTRID>
+S:    </trID>
+S:  </response>
+S: </epp>
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
