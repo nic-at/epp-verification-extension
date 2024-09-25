@@ -16,6 +16,8 @@ The intended workflow for this extension is as follows:
 4. Registrar creates Verification Rerport and provisions this with the registry via a <contact:update> transform command on the registrant, using the extension described in this document.
 5. Registry acts upon the Verification Report contents, with actual procedures being subject to local server policy
 
+During that procedure, the Domain and Contact objects show additional status values, as specified in the `statusValueType` of the XML schema.
+
 ## The Verification Report
 
 When a registrar has completed verification process for a registrant, the result will be communicated back to the registry using the `<contact:create>` or `<contact:update>` transform commands, via a `<verification:report>` element (assuming the extension namespace is tied to the `verification` name space prefix). The `<verification:report>` can occur at most once in those commands, however, a registrar may submit multiple Verification Reports in multiple commands. The registry will consider the most recently submitted Verification Report for the verification status of the registrant (and associated domains), but actual interpretation is local server policy.
@@ -24,16 +26,30 @@ A `<verification:report>` element contains the following elements:
 
 - one `result` element, containing information about the outcome of the verification process, containing the string "success" or "failure"
 - one `verificationDate` element, containing the point in time of the completion of the verification process, in `dateTime` format
-- one `method` element, describing the method of verification in free text form
-- one `reference` element, provinding the representation of an internal reference to the verification documentation at the registrar (eg. a ticket number)
-- one `agent` element, containing the name of the entity that has performed the verification (eg. in case the verification was outsourced to a third party)
+- one optional `method` element, describing the method of verification in free text form
+- one  optional `reference` element, provinding the representation of an internal reference to the verification documentation at the registrar (eg. a ticket number)
+- one  optional `agent` element, containing the name of the entity that has performed the verification (eg. in case the verification was outsourced to a third party)
 
-Interpretation and restriction of those fields is subject to server policy, however a server MUST NOT accept a command that includes a Verification Report with a future `verificationDate` element.
+Interpretation and restriction of those fields is subject to server policy, however a server MUST NOT accept a command that includes a Verification Report with a future `verificationDate` element. Also note that the elements defined as optional in the Schema can still be required based on local server policy.
 
 When a server returns a Verification Report in the response to a `<contact:info>` command, the `<verification:report>` element may contain the following attributes:
 
 - `receivedDate` - The point in time at which the Verification Report was received from the client
 - `clID` - The identifier of the client that originally submitted the Verification Report (as contacts may be transferred between clients)
+
+These attributes cannot be used when the Verification Report is submitted by the client, and attempts to do so MUST be rejected by the server with a policy error.
+
+## Verification Status
+
+The extension provides for Verification Status to be included in `info` query command responsed, with the following possible values:
+
+- `none` indicating that no verification process is or was performed on that object yet. 
+- `pending` reflecting that an ongoing verification process is underway, on either the object itself, or on the associated registrant object (in case of a domain object)
+- `serverHold` (only sensible on the Domain object), indicating that the verification process has led to the domain being excluded from the DNS.
+- `verified` reflecting that the verification process for the object has successfully concluded.
+- `failed` indicating that the Verification Process for the object has failed.
+
+Note that Verification Status refers to the most recent Verification Process.
 
 ## Security Considerations
 
@@ -96,7 +112,8 @@ S:  {{ standard contact info data goes here }}
 S:      </contact:infData>
 S:    </resData>
 S:    <extension>
-S:      <verification:infData {{ XML NS definition}}>
+S:      <verification:infData xmlns:verification="http://www.nic.at/xsd/at-ext-verification-1.0"
+S:             xsi:schemaLocation="http://www.nic.at/xsd/at-ext-verification-1.0.xsd">
 S:        <verification:report receivedDate="2024-03-26T22:00:00.0Z" clID="reg123">
 S:          <verification:result>success</verification:result>
 S:          <verification:verificationDate>2023-11-26T22:00:00.0Z</verification:verificationDate>
@@ -113,6 +130,8 @@ S:    </trID>
 S:  </response>
 S: </epp>
 ```
+
+Note that in addition to the Verification Report, that response also contains the `status` element that reflects the verification status of the object.
 
 ### Domain Info example
 
@@ -145,4 +164,8 @@ S:    </trID>
 S:  </response>
 S: </epp>
 ```
+It is local server policy when Verification Status information is included in a domain object, but it is RECOMMENDED to at least include the following two status values:
+
+- `pending` when a verification process on the associated registrant object is in pending state.
+- `serverHold` when the verification process on the associated registrant required to remove the Domain from the DNS.
 
