@@ -12,9 +12,9 @@ The intended workflow for this extension is as follows:
 
 1. Registry identifies Domain objects for which registrant must be verified (selection mechanism is out of scope of this extension)
 2. Registry notifies registrar about that verification request (preferrably by the EPP Message Queue mechanism - message format is out of scope of this extension)
-3. Registrar receives verification request, and verifies registrant contact for the given domain name
-4. Registrar creates Verification Rerport and provisions this with the registry via a <contact:update> transform command on the registrant, using the extension described in this document.
-5. Registry acts upon the Verification Report contents, with actual procedures being subject to local server policy
+3. Registrar receives verification request and verifies registrant contact for the given domain name
+4. Registrar creates Verification Report and provisions this with the registry via a <contact:update> transform command on the registrant, using the extension described in this document.
+5. Registry acts upon the Verification Report contents, with actual procedures being subject to local server policy.
 
 During that procedure, the Domain and Contact objects show additional status values, as specified in the `statusValueType` of the XML schema.
 
