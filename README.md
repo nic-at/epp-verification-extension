@@ -78,8 +78,7 @@ C:   </update>
 C:   <extension>
 C:    <verification:update 
 C:           xmlns:verification="http://www.nic.at/xsd/at-ext-verificationReport-1.0" 
-C:           xsi:schemaLocation="urn:ietf:params:xml:ns:verificationReport-1.0 
-C:           verificationReport-1.0.xsd">  
+C:           xsi:schemaLocation="http://www.nic.at/xsd/at-ext-verification-1.0 at-ext-verification-1.0.xsd">  
 C:     <verification:report>
 C:      <verification:result>success</verification:result>
 C:      <verification:verificationDate>2023-11-26T22:00:00.0Z</verification:verificationDate>
@@ -113,7 +112,7 @@ S:      </contact:infData>
 S:    </resData>
 S:    <extension>
 S:      <verification:infData xmlns:verification="http://www.nic.at/xsd/at-ext-verification-1.0"
-S:             xsi:schemaLocation="http://www.nic.at/xsd/at-ext-verification-1.0.xsd">
+S:             xsi:schemaLocation="http://www.nic.at/xsd/at-ext-verification-1.0 at-ext-verification-1.0.xsd">
 S:        <verification:report receivedDate="2024-03-26T22:00:00.0Z" clID="reg123">
 S:          <verification:result>success</verification:result>
 S:          <verification:verificationDate>2023-11-26T22:00:00.0Z</verification:verificationDate>
@@ -152,7 +151,7 @@ S: {{ usual domain info data removed }}
 S:    </resData>
 S:    <extension>
 S:      <verification:infData xmlns:verification="http://www.nic.at/xsd/at-ext-verification-1.0"
-S:          xsi:schemaLocation="http://www.nic.at/xsd/at-ext-verification-1.0.xsd">
+S:          xsi:schemaLocation="http://www.nic.at/xsd/at-ext-verification-1.0 at-ext-verification-1.0.xsd">
 S:        <verification:status s="pending"/>
 S:        <verification:actionDate>2025-11-26T22:00:00.0Z</verification:actionDate>
 S:      </verification:infData>
