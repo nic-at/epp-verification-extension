@@ -1,6 +1,6 @@
 # .at EPP Verification Extension
 
-v1.0, 20240924, Contact: Alexander Mayrhofer <alexander.mayrhofer@nic.at>
+v1.1, 20260810, Contact: Alexander Mayrhofer <alexander.mayrhofer@nic.at>
 
 This Extensible Provisioning Protocol (EPP) Extension provides the EPP protocol transport for the `verificationReport` and the corresponding, required status values associated to Domain and Contact objects.
 
@@ -32,16 +32,22 @@ A `<verification:report>` element contains the following elements:
 
 Interpretation and restriction of those fields is subject to server policy, however a server MUST NOT accept a command that includes a Verification Report with a future `verificationDate` element. Also note that the elements defined as optional in the Schema can still be required based on local server policy.
 
-When a server returns a Verification Report in the response to a `<contact:info>` command, the `<verification:report>` element may contain the following attributes:
+When a server returns a Verification Report in the response to a `<contact:info>` command, the following additional attributes / elements may be returned: 
 
-- `receivedDate` - The point in time at which the Verification Report was received from the client
-- `clID` - The identifier of the client that originally submitted the Verification Report (as contacts may be transferred between clients)
+- `receivedDate` attribute in the `<verification:report>` element: Point in time at which the Verification Report was received from the client
+- `clID` attribute in the `<verification:report>` element: The identifier of the client that originally submitted the Verification Report (as contacts may be transferred between clients)
+- `<verification:status>` element: See below.
 
 These attributes cannot be used when the Verification Report is submitted by the client, and attempts to do so MUST be rejected by the server with a policy error.
 
+When a server returns a response to a `<domain:info>` query command, the extension allows for inclusion of the following additional components:
+
+- `<verification:status>`: See below.
+- `<verification:actionDate>`: Describes the point in time at which the registry/server will perform the next step in the verification process (eg. until which point in time verification is required).
+
 ## Verification Status
 
-The extension provides for Verification Status to be included in `info` query command responsed, with the following possible values:
+The extension provides for Verification Status to be included in `info` query command responses, with the following possible values:
 
 - `none` indicating that no verification process is or was performed on that object yet. 
 - `pending` reflecting that an ongoing verification process is underway, on either the object itself, or on the associated registrant object (in case of a domain object)
@@ -93,7 +99,7 @@ C:  </command>
 C: </epp>
 ```
 
-### Contact Info, returning a verificationReport
+### Contact Info example with verificationReport
 
 Example of a server responding to a `<contact:info>` query command, with the response containing a `verificationReport` structure. Note that the "standard" contact object response is truncated for brevity.
 
